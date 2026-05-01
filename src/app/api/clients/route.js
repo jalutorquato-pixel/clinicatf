@@ -4,6 +4,8 @@ import jwt from 'jsonwebtoken';
 
 const SECRET_KEY = process.env.SECRET_KEY || 'supersecret';
 
+export const dynamic = 'force-dynamic';
+
 async function getUser(req) {
   const authHeader = req.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
