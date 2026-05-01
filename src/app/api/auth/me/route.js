@@ -4,6 +4,8 @@ import jwt from 'jsonwebtoken';
 
 const SECRET_KEY = process.env.SECRET_KEY || 'supersecret';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req) {
   try {
     const authHeader = req.headers.get('authorization');
