@@ -1,0 +1,426 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int      @id @default(autoincrement())
+  username        String   @unique
+  hashed_password String
+  is_active       Boolean  @default(true)
+  created_at      DateTime @default(now())
+
+  @@map("users")
+}
+
+model Client {
+  id                 Int       @id @default(autoincrement())
+  full_name          String
+  phone              String?
+  email              String?
+  cpf                String?
+  birth_date         DateTime?
+  address            String?
+  zip_code           String?
+  street             String?
+  address_number     String?
+  address_complement String?
+  neighborhood       String?
+  city               String?
+  state              String?
+  latitude           Float?
+  longitude          Float?
+  origin             String?
+  notes              String?
+  created_at         DateTime  @default(now())
+  is_active          Boolean   @default(true)
+
+  ambassador          Ambassador?
+  referrals           Referral[]
+  procedure_records   ProcedureRecord[]
+  generated_contracts GeneratedContract[]
+  appointments        Appointment[]
+  sales               Sale[]
+  account_entries     AccountEntry[]
+  anamnesis_records   AnamnesisRecord[]
+  prescription_records PrescriptionRecord[]
+
+  @@map("clients")
+}
+
+model Ambassador {
+  id             Int      @id @default(autoincrement())
+  client_id      Int      @unique
+  public_name    String
+  coupon         String   @unique
+  exclusive_link String
+  joined_at      DateTime @default(now())
+  status         String   @default("ativa")
+  level          String   @default("comum")
+  notes          String?
+
+  client          Client            @relation(fields: [client_id], references: [id])
+  referrals       Referral[]
+  points          Point[]
+  earned_benefits EarnedBenefit[]
+  credits         Credit[]
+
+  @@map("ambassadors")
+}
+
+model Referral {
+  id                 Int       @id @default(autoincrement())
+  ambassador_id      Int
+  client_id          Int?
+  referred_name      String
+  referred_phone     String?
+  referred_email     String?
+  coupon_used        String?
+  channel            String    @default("recepção")
+  referred_at        DateTime  @default(now())
+  status             String    @default("recebida")
+  notes              String?
+  generated_point    Boolean   @default(false)
+  point_validated_at DateTime?
+
+  ambassador        Ambassador        @relation(fields: [ambassador_id], references: [id])
+  client            Client?           @relation(fields: [client_id], references: [id])
+  procedure_records ProcedureRecord[]
+  points            Point[]
+  credits           Credit[]
+  appointments      Appointment[]
+
+  @@map("referrals")
+}
+
+model Procedure {
+  id            Int     @id @default(autoincrement())
+  name          String  @unique
+  category      String?
+  description   String?
+  default_price Float   @default(0)
+  is_active     Boolean @default(true)
+
+  procedure_records ProcedureRecord[]
+  appointments      Appointment[]
+  sale_items        SaleItem[]
+
+  @@map("procedures")
+}
+
+model ProcedureRecord {
+  id                 Int      @id @default(autoincrement())
+  client_id          Int
+  referral_id        Int?
+  procedure_id       Int
+  date               DateTime @default(now())
+  charged_value      Float    @default(0)
+  professional       String?
+  notes              String?
+  status             String   @default("realizado")
+  linked_contract_id Int?
+
+  client              Client              @relation(fields: [client_id], references: [id])
+  referral            Referral?           @relation(fields: [referral_id], references: [id])
+  procedure           Procedure           @relation(fields: [procedure_id], references: [id])
+  generated_contracts GeneratedContract[]
+
+  @@map("procedure_records")
+}
+
+model Cycle {
+  id         Int      @id @default(autoincrement())
+  name       String
+  start_date DateTime
+  end_date   DateTime
+  status     String   @default("futuro")
+  notes      String?
+
+  points          Point[]
+  earned_benefits EarnedBenefit[]
+
+  @@map("cycles")
+}
+
+model Point {
+  id            Int      @id @default(autoincrement())
+  ambassador_id Int
+  referral_id   Int      @unique
+  cycle_id      Int
+  points        Int      @default(1)
+  date          DateTime @default(now())
+  reason        String   @default("Indicação validada")
+  validated_by  String?
+
+  ambassador Ambassador @relation(fields: [ambassador_id], references: [id])
+  referral   Referral   @relation(fields: [referral_id], references: [id])
+  cycle      Cycle      @relation(fields: [cycle_id], references: [id])
+
+  @@map("points")
+}
+
+model Benefit {
+  id              Int     @id @default(autoincrement())
+  required_points Int
+  name            String
+  description     String?
+  type            String?
+  is_active       Boolean @default(true)
+
+  earned_benefits EarnedBenefit[]
+
+  @@map("benefits")
+}
+
+model EarnedBenefit {
+  id            Int       @id @default(autoincrement())
+  ambassador_id Int
+  benefit_id    Int
+  cycle_id      Int
+  status        String    @default("conquistado")
+  earned_at     DateTime  @default(now())
+  used_at       DateTime?
+  notes         String?
+
+  ambassador Ambassador @relation(fields: [ambassador_id], references: [id])
+  benefit    Benefit    @relation(fields: [benefit_id], references: [id])
+  cycle      Cycle      @relation(fields: [cycle_id], references: [id])
+
+  @@unique([ambassador_id, benefit_id, cycle_id], name: "uq_earned_benefit_cycle")
+  @@map("earned_benefits")
+}
+
+model Credit {
+  id            Int      @id @default(autoincrement())
+  ambassador_id Int
+  referral_id   Int?
+  value         Float    @default(0)
+  type          String   @default("entrada")
+  date          DateTime @default(now())
+  description   String?
+
+  ambassador Ambassador @relation(fields: [ambassador_id], references: [id])
+  referral   Referral?  @relation(fields: [referral_id], references: [id])
+
+  @@map("credits")
+}
+
+model ContractTemplate {
+  id         Int      @id @default(autoincrement())
+  name       String
+  category   String?
+  content    String
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  generated_contracts GeneratedContract[]
+
+  @@map("contract_templates")
+}
+
+model GeneratedContract {
+  id                  Int       @id @default(autoincrement())
+  client_id           Int
+  procedure_record_id Int?
+  template_id         Int
+  final_content       String
+  status              String    @default("gerado")
+  generated_at        DateTime  @default(now())
+  signed_at           DateTime?
+  notes               String?
+
+  client           Client            @relation(fields: [client_id], references: [id])
+  procedure_record ProcedureRecord?  @relation(fields: [procedure_record_id], references: [id])
+  template         ContractTemplate  @relation(fields: [template_id], references: [id])
+
+  @@map("generated_contracts")
+}
+
+model Setting {
+  id    Int     @id @default(autoincrement())
+  key   String  @unique
+  value String?
+
+  @@map("settings")
+}
+
+model Appointment {
+  id            Int       @id @default(autoincrement())
+  client_id     Int?
+  referral_id   Int?
+  procedure_id  Int?
+  title         String
+  start_at      DateTime
+  end_at        DateTime?
+  professional  String?
+  room          String?
+  status        String    @default("agendado")
+  color         String?
+  recurrence    String?
+  notify_client Boolean   @default(false)
+  notes         String?
+  created_at    DateTime  @default(now())
+
+  client           Client?           @relation(fields: [client_id], references: [id])
+  referral         Referral?         @relation(fields: [referral_id], references: [id])
+  procedure        Procedure?        @relation(fields: [procedure_id], references: [id])
+  sales            Sale[]
+  anamnesis_records AnamnesisRecord[]
+
+  @@map("appointments")
+}
+
+model Sale {
+  id             Int       @id @default(autoincrement())
+  client_id      Int?
+  appointment_id Int?
+  type           String    @default("orcamento")
+  status         String    @default("aberto")
+  sale_date      DateTime  @default(now())
+  due_date       DateTime?
+  total          Float     @default(0)
+  paid_value     Float     @default(0)
+  payment_method String?
+  professional   String?
+  notes          String?
+  created_at     DateTime  @default(now())
+
+  client          Client?        @relation(fields: [client_id], references: [id])
+  appointment     Appointment?   @relation(fields: [appointment_id], references: [id])
+  items           SaleItem[]
+  account_entries AccountEntry[]
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id           Int    @id @default(autoincrement())
+  sale_id      Int
+  item_type    String @default("procedimento")
+  procedure_id Int?
+  product_id   Int?
+  description  String
+  quantity     Float  @default(1)
+  unit_price   Float  @default(0)
+  total        Float  @default(0)
+
+  sale      Sale       @relation(fields: [sale_id], references: [id])
+  procedure Procedure? @relation(fields: [procedure_id], references: [id])
+  product   Product?   @relation(fields: [product_id], references: [id])
+
+  @@map("sale_items")
+}
+
+model AccountEntry {
+  id             Int       @id @default(autoincrement())
+  type           String    @default("receita")
+  description    String
+  client_id      Int?
+  sale_id        Int?
+  category       String?
+  due_date       DateTime  @default(now())
+  paid_at        DateTime?
+  value          Float     @default(0)
+  status         String    @default("nao_pago")
+  payment_method String?
+  notes          String?
+
+  client Client? @relation(fields: [client_id], references: [id])
+  sale   Sale?   @relation(fields: [sale_id], references: [id])
+
+  @@map("account_entries")
+}
+
+model Product {
+  id             Int     @id @default(autoincrement())
+  name           String  @unique
+  category       String?
+  sku            String? @unique
+  description    String?
+  price          Float   @default(0)
+  cost           Float   @default(0)
+  stock_quantity Float   @default(0)
+  min_stock      Float   @default(0)
+  is_active      Boolean @default(true)
+
+  sale_items      SaleItem[]
+  stock_movements StockMovement[]
+
+  @@map("products")
+}
+
+model StockMovement {
+  id         Int      @id @default(autoincrement())
+  product_id Int
+  type       String   @default("entrada")
+  quantity   Float    @default(0)
+  date       DateTime @default(now())
+  reason     String?
+  notes      String?
+
+  product Product @relation(fields: [product_id], references: [id])
+
+  @@map("stock_movements")
+}
+
+model AnamnesisTemplate {
+  id         Int      @id @default(autoincrement())
+  name       String
+  category   String?
+  content    String
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  anamnesis_records AnamnesisRecord[]
+
+  @@map("anamnesis_templates")
+}
+
+model AnamnesisRecord {
+  id             Int       @id @default(autoincrement())
+  client_id      Int
+  appointment_id Int?
+  template_id    Int?
+  title          String
+  answers        String?
+  status         String    @default("pendente")
+  signed_at      DateTime?
+  created_at     DateTime  @default(now())
+
+  client      Client             @relation(fields: [client_id], references: [id])
+  appointment Appointment?       @relation(fields: [appointment_id], references: [id])
+  template    AnamnesisTemplate? @relation(fields: [template_id], references: [id])
+
+  @@map("anamnesis_records")
+}
+
+model PrescriptionTemplate {
+  id         Int      @id @default(autoincrement())
+  name       String
+  content    String
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  prescription_records PrescriptionRecord[]
+
+  @@map("prescription_templates")
+}
+
+model PrescriptionRecord {
+  id           Int      @id @default(autoincrement())
+  client_id    Int
+  template_id  Int?
+  title        String
+  content      String
+  professional String?
+  created_at   DateTime @default(now())
+
+  client   Client                @relation(fields: [client_id], references: [id])
+  template PrescriptionTemplate? @relation(fields: [template_id], references: [id])
+
+  @@map("prescription_records")
+}
