@@ -6,6 +6,7 @@ import apiClient from '../api/client';
 const maskCPF = (v) => v.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').replace(/(-\d{2})\d+?$/, '$1');
 const maskPhone = (v) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2').replace(/(-\d{4})\d+?$/, '$1');
 const maskCEP = (v) => v.replace(/\D/g, '').replace(/(\d{5})(\d)/, '$1-$2').replace(/(-\d{3})\d+?$/, '$1');
+const formatDateForInput = (v) => v ? String(v).slice(0, 10) : '';
 
 export default function ClienteForm({ initialData, onSuccess, onCancel }) {
   const [formData, setFormData] = useState({
@@ -33,7 +34,7 @@ export default function ClienteForm({ initialData, onSuccess, onCancel }) {
         telefone: (initialData.phone || initialData.telefone) ? maskPhone(initialData.phone || initialData.telefone) : '',
         email: initialData.email || '',
         cpf: initialData.cpf ? maskCPF(initialData.cpf) : '',
-        data_nascimento: initialData.birth_date || initialData.data_nascimento || '',
+        data_nascimento: formatDateForInput(initialData.birth_date || initialData.data_nascimento),
         cep: (initialData.zip_code || initialData.cep) ? maskCEP(initialData.zip_code || initialData.cep) : '',
         rua: initialData.street || initialData.rua || '',
         numero: initialData.address_number || initialData.numero || '',

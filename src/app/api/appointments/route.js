@@ -18,21 +18,40 @@ export async function GET(req) {
   if (!user) return NextResponse.json({ detail: "Não autorizado" }, { status: 401 });
 
   try {
-    const records = await prisma.appointment.findMany({ 
+    const { searchParams } = new URL(req.url);
+    const clientId = searchParams.get('client_id');
+    const parsedClientId = clientId ? Number(clientId) : null;
+
+    if (clientId && (!Number.isInteger(parsedClientId) || parsedClientId <= 0)) {
+      return NextResponse.json({ detail: "client_id inválido" }, { status: 400 });
+    }
+
+    const records = await prisma.appointment.findMany({
+      where: parsedClientId ? { client_id: parsedClientId } : undefined,
       include: { 
         client: { select: { full_name: true } },
         procedure: { select: { name: true } }
       },
-      orderBy: { scheduled_time: 'desc' } 
+      orderBy: { start_at: 'desc' }
     });
     
     const formatted = records.map(r => ({
       id: r.id,
+      client_id: r.client_id,
+      procedure_id: r.procedure_id,
+      title: r.title,
       client_name: r.client?.full_name,
       procedure_name: r.procedure?.name,
-      scheduled_time: r.scheduled_time,
+      start_time: r.start_at,
+      end_time: r.end_at,
+      start_at: r.start_at,
+      end_at: r.end_at,
+      scheduled_time: r.start_at,
       professional: r.professional,
+      professional_name: r.professional,
+      room: r.room,
       status: r.status,
+      color: r.color,
       notes: r.notes
     }));
 

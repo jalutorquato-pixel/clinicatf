@@ -22,7 +22,16 @@ export async function GET(req) {
   if (!user) return NextResponse.json({ detail: "Não autorizado" }, { status: 401 });
 
   try {
+    const { searchParams } = new URL(req.url);
+    const clientId = searchParams.get('client_id');
+    const parsedClientId = clientId ? Number(clientId) : null;
+
+    if (clientId && (!Number.isInteger(parsedClientId) || parsedClientId <= 0)) {
+      return NextResponse.json({ detail: "client_id inválido" }, { status: 400 });
+    }
+
     const sales = await prisma.sale.findMany({
+      where: parsedClientId ? { client_id: parsedClientId } : undefined,
       include: {
         client: true,
         appointment: true,
@@ -35,7 +44,13 @@ export async function GET(req) {
       },
       orderBy: { id: 'desc' }
     });
-    return NextResponse.json(sales);
+
+    const formattedSales = sales.map(sale => ({
+      ...sale,
+      client_name: sale.client?.full_name
+    }));
+
+    return NextResponse.json(formattedSales);
   } catch (error) {
     return NextResponse.json({ detail: "Internal Server Error" }, { status: 500 });
   }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Plus, Map, List, Edit, Eye } from 'lucide-react';
+import { Plus, Map, List, Edit, Eye, Trash2 } from 'lucide-react';
 import { useRouter } from "next/navigation";
 import apiClient from "../../../api/client";
 import { 
@@ -27,7 +27,9 @@ export default function Clientes() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState(null);
+  const [clientToDelete, setClientToDelete] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [toast, setToast] = useState({ message: '', type: '' });
 
   // Busca os clientes na montagem do componente
@@ -55,6 +57,23 @@ export default function Clientes() {
 
   const showToast = (message, type = 'info') => {
     setToast({ message, type });
+  };
+
+  const handleDeleteClient = async () => {
+    if (!clientToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await apiClient.delete(`/clients/${clientToDelete.id}`);
+      showToast('Cliente excluído com sucesso.', 'success');
+      setClientToDelete(null);
+      fetchClientes();
+    } catch (error) {
+      console.error('Erro ao excluir cliente:', error);
+      showToast('Erro ao excluir cliente.', 'error');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // Filtragem
@@ -104,6 +123,14 @@ export default function Clientes() {
             title="Editar"
           >
             <Edit size={16} />
+          </button>
+          <button
+            className="btn-icon"
+            onClick={() => setClientToDelete(row)}
+            title="Excluir"
+            style={{ color: '#ef4444' }}
+          >
+            <Trash2 size={16} />
           </button>
         </div>
       )
@@ -189,6 +216,24 @@ export default function Clientes() {
           }}
           onCancel={() => setIsModalOpen(false)}
         />
+      </Modal>
+
+      <Modal
+        open={!!clientToDelete}
+        onClose={() => setClientToDelete(null)}
+        title="Excluir Cliente"
+      >
+        <p style={{ marginBottom: '1.5rem', color: '#4b5563', lineHeight: '1.5' }}>
+          Deseja excluir <strong>{clientToDelete?.full_name || clientToDelete?.nome}</strong>? O cliente ficará inativo e o histórico será preservado.
+        </p>
+        <div className="modal-actions">
+          <button type="button" className="btn-secondary" onClick={() => setClientToDelete(null)} disabled={isDeleting}>
+            Cancelar
+          </button>
+          <button type="button" className="btn-primary" onClick={handleDeleteClient} disabled={isDeleting} style={{ backgroundColor: '#ef4444' }}>
+            {isDeleting ? 'Excluindo...' : 'Excluir Cliente'}
+          </button>
+        </div>
       </Modal>
 
       <Toast 

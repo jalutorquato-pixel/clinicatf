@@ -22,7 +22,16 @@ export async function GET(req) {
   if (!user) return NextResponse.json({ detail: "Não autorizado" }, { status: 401 });
 
   try {
+    const { searchParams } = new URL(req.url);
+    const clientId = searchParams.get('client_id');
+    const parsedClientId = clientId ? Number(clientId) : null;
+
+    if (clientId && (!Number.isInteger(parsedClientId) || parsedClientId <= 0)) {
+      return NextResponse.json({ detail: "client_id inválido" }, { status: 400 });
+    }
+
     const procedureRecords = await prisma.procedureRecord.findMany({
+      where: parsedClientId ? { client_id: parsedClientId } : undefined,
       include: {
         client: {
           select: { full_name: true }
@@ -37,6 +46,7 @@ export async function GET(req) {
     // Mapear os resultados para o formato que o frontend espera (similar ao que foi mockado)
     const formattedRecords = procedureRecords.map(record => ({
       id: record.id,
+      client_id: record.client_id,
       client_name: record.client?.full_name || 'Desconhecido',
       procedure_name: record.procedure?.name || 'Desconhecido',
       date: record.date,
