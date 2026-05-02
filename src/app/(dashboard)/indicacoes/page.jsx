@@ -48,15 +48,8 @@ export default function Indicacoes() {
     setIsLoading(true);
     try {
       const [resReferrals, resAmbassadors] = await Promise.all([
-        apiClient.get('/referrals').catch(() => ({ data: [
-          { id: 1, ambassador_name: 'Ana Beauty', ambassador_id: 1, referred_name: 'Julia Silva', referred_phone: '(11) 98888-7777', channel: 'link', status: 'recebida', created_at: '2023-10-25T10:00:00' },
-          { id: 2, ambassador_name: 'Ju Indica', ambassador_id: 2, referred_name: 'Marcos Costa', referred_phone: '(21) 97777-6666', channel: 'WhatsApp', status: 'procedimento_realizado', created_at: '2023-10-20T14:30:00' },
-          { id: 3, ambassador_name: 'Ana Beauty', ambassador_id: 1, referred_name: 'Luiza Souza', referred_phone: '(11) 95555-4444', channel: 'Instagram', status: 'ponto_validado', created_at: '2023-10-18T09:15:00' }
-        ]})),
-        apiClient.get('/ambassadors').catch(() => ({ data: [
-          { id: 1, public_name: 'Ana Beauty' },
-          { id: 2, public_name: 'Ju Indica' }
-        ]}))
+        apiClient.get('/referrals'),
+        apiClient.get('/ambassadors')
       ]);
       setIndicacoes(resReferrals.data);
       setEmbaixadoras(resAmbassadors.data);
@@ -93,10 +86,7 @@ export default function Indicacoes() {
       fetchData();
     } catch (error) {
       console.error(error);
-      // Mock de sucesso
-      showToast('Indicação criada com sucesso!', 'success');
-      setIsModalOpen(false);
-      fetchData();
+      showToast('Erro ao criar indicação.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -109,9 +99,7 @@ export default function Indicacoes() {
       fetchData();
     } catch (error) {
       console.error(error);
-      // Mock update localmente se API falhar
-      setIndicacoes(prev => prev.map(ind => ind.id === id ? { ...ind, status: 'ponto_validado' } : ind));
-      showToast('Ponto validado com sucesso!', 'success');
+      showToast('Erro ao validar ponto.', 'error');
     }
   };
 

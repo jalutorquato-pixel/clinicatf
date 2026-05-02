@@ -17,15 +17,8 @@ export default function Beneficios() {
     setIsLoading(true);
     try {
       const [resBen, resEarned] = await Promise.all([
-        apiClient.get('/benefits').catch(() => ({ data: [
-          { id: 1, name: 'Limpeza de Pele', points_required: 150, type: 'procedimento' },
-          { id: 2, name: 'Massagem Relaxante', points_required: 200, type: 'procedimento' },
-          { id: 3, name: 'R$ 100 em Crédito', points_required: 300, type: 'credito' }
-        ]})),
-        apiClient.get('/earned-benefits').catch(() => ({ data: [
-          { id: 1, ambassador_name: 'Ana Beauty', benefit_name: 'Limpeza de Pele', date_earned: '2023-10-15', status: 'conquistado' },
-          { id: 2, ambassador_name: 'Ju Indica', benefit_name: 'R$ 100 em Crédito', date_earned: '2023-09-20', status: 'utilizado' }
-        ]}))
+        apiClient.get('/benefits'),
+        apiClient.get('/earned-benefits')
       ]);
       setBeneficios(resBen.data);
       setConquistados(resEarned.data);

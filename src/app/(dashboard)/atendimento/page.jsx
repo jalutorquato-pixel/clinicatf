@@ -48,25 +48,12 @@ export default function Atendimento() {
     setIsLoading(true);
     try {
       const [resAnamneses, resReceitas, resClientes, resProfissionais, resAnamneseTpl, resReceitaTpl] = await Promise.all([
-        apiClient.get('/anamnesis-records').catch(() => ({ data: [
-          { id: 1, client_name: 'Maria Silva', title: 'Anamnese Corporal Básica', status: 'finalizada', date: '2023-10-25T10:00:00' },
-          { id: 2, client_name: 'João Pedro', title: 'Questionário Facial', status: 'pendente', date: '2023-10-26T14:30:00' }
-        ]})),
-        apiClient.get('/prescription-records').catch(() => ({ data: [
-          { id: 1, client_name: 'Ana Beauty', title: 'Receita Pós-Botox', professional_name: 'Dra. Ana', date: '2023-10-20T11:15:00' }
-        ]})),
-        apiClient.get('/clients').catch(() => ({ data: [
-          { id: 1, nome: 'Maria Silva' }, { id: 2, nome: 'João Pedro' }, { id: 3, nome: 'Ana Beauty' }
-        ]})),
-        apiClient.get('/professionals').catch(() => ({ data: [
-          { id: 1, name: 'Dra. Ana' }, { id: 2, name: 'Dr. Carlos' }
-        ]})),
-        apiClient.get('/anamnesis-templates').catch(() => ({ data: [
-          { id: 1, title: 'Ficha Corporal Padrão' }, { id: 2, title: 'Ficha Facial Padrão' }
-        ]})),
-        apiClient.get('/prescription-templates').catch(() => ({ data: [
-          { id: 1, title: 'Pós-operatório Injetáveis' }, { id: 2, title: 'Home Care Acne' }
-        ]}))
+        apiClient.get('/anamnesis-records'),
+        apiClient.get('/prescription-records'),
+        apiClient.get('/clients'),
+        apiClient.get('/professionals'),
+        apiClient.get('/anamnesis-templates'),
+        apiClient.get('/prescription-templates')
       ]);
       
       setAnamneses(resAnamneses.data);

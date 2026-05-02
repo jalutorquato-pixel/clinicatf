@@ -28,13 +28,7 @@ export default function Configuracoes() {
   const fetchSettings = async () => {
     setIsLoading(true);
     try {
-      const res = await apiClient.get('/settings').catch(() => ({ data: {
-        clinic_name: 'Clínica TF',
-        cnpj: '12.345.678/0001-90',
-        credit_value_per_20_pts: 50.00,
-        program_rules: '1. Cada indicação convertida em procedimento gera 1 ponto.\n2. Os pontos são válidos por 6 meses.\n3. O resgate deve ser agendado previamente.',
-        professionals: ['Dra. Ana', 'Dr. Carlos', 'Fátima (Estética)']
-      }}));
+      const res = await apiClient.get('/settings');
       setSettings(res.data);
     } catch (error) {
       showToast('Erro ao carregar configurações.', 'error');

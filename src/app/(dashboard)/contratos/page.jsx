@@ -41,17 +41,9 @@ export default function Contratos() {
     setIsLoading(true);
     try {
       const [resModelos, resContratos, resClientes] = await Promise.all([
-        apiClient.get('/contract-templates').catch(() => ({ data: [
-          { id: 1, name: 'Consentimento Botox', category: 'Termo de Consentimento', is_active: true },
-          { id: 2, name: 'Contrato Pacote de Estética', category: 'Contrato Financeiro', is_active: true }
-        ]})),
-        apiClient.get('/contracts').catch(() => ({ data: [
-          { id: 1, client_name: 'Maria Silva', template_name: 'Consentimento Botox', status: 'assinado', created_at: '2023-10-20T10:00:00' },
-          { id: 2, client_name: 'João Pedro', template_name: 'Contrato Pacote de Estética', status: 'gerado', created_at: '2023-10-25T14:30:00' }
-        ]})),
-        apiClient.get('/clients').catch(() => ({ data: [
-          { id: 1, nome: 'Maria Silva' }, { id: 2, nome: 'João Pedro' }
-        ]}))
+        apiClient.get('/contract-templates'),
+        apiClient.get('/contracts'),
+        apiClient.get('/clients')
       ]);
       setModelos(resModelos.data);
       setContratos(resContratos.data);
@@ -75,9 +67,7 @@ export default function Contratos() {
       setModeloForm({ name: '', category: '', content: '', is_active: true });
       fetchData();
     } catch (error) {
-      showToast('Modelo de contrato salvo com sucesso!', 'success');
-      setIsModeloModalOpen(false);
-      fetchData();
+      showToast('Erro ao salvar modelo de contrato.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -93,9 +83,7 @@ export default function Contratos() {
       setGerarForm({ client_id: '', template_id: '', status: 'gerado', notes: '' });
       fetchData();
     } catch (error) {
-      showToast('Contrato gerado com sucesso!', 'success');
-      setIsGerarModalOpen(false);
-      fetchData();
+      showToast('Erro ao gerar contrato.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -124,9 +112,7 @@ export default function Contratos() {
       showToast('Contrato marcado como assinado!', 'success');
       fetchData();
     } catch (error) {
-      // Mock update localmente
-      setContratos(prev => prev.map(c => c.id === id ? { ...c, status: 'assinado' } : c));
-      showToast('Contrato marcado como assinado!', 'success');
+      showToast('Erro ao assinar contrato.', 'error');
     }
   };
 

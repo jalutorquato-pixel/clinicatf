@@ -44,14 +44,8 @@ export default function Embaixadoras() {
     setIsLoading(true);
     try {
       const [resAmbassadors, resClients] = await Promise.all([
-        apiClient.get('/ambassadors').catch(() => ({ data: [
-          { id: 1, public_name: 'Ana Beauty', coupon_code: 'ANA10', level: 'avançada', status: 'ativa', current_points: 450, client_id: 1 },
-          { id: 2, public_name: 'Ju Indica', coupon_code: 'JU20', level: 'elite', status: 'pausada', current_points: 1200, client_id: 2 }
-        ]})),
-        apiClient.get('/clients').catch(() => ({ data: [
-          { id: 1, nome: 'Ana Maria' },
-          { id: 2, nome: 'Juliana Costa' }
-        ]}))
+        apiClient.get('/ambassadors'),
+        apiClient.get('/clients')
       ]);
       setEmbaixadoras(resAmbassadors.data);
       setClientes(resClients.data);

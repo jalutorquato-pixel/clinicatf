@@ -45,14 +45,10 @@ export default function Agenda() {
     setIsLoading(true);
     try {
       const [resAgendamentos, resClientes, resProcedimentos, resProfissionais] = await Promise.all([
-        apiClient.get('/appointments').catch(() => ({ data: [
-          { id: 1, title: 'Limpeza Facial', client_name: 'Maria Silva', procedure_name: 'Limpeza de Pele', professional_name: 'Dra. Ana', room: 'Sala 1', start_time: '2023-10-30T09:00', end_time: '2023-10-30T10:00', status: 'confirmado', color: '#1D9E75' },
-          { id: 2, title: 'Retorno Botox', client_name: 'João Pedro', procedure_name: 'Botox', professional_name: 'Dr. Carlos', room: 'Sala 3', start_time: '2023-10-30T11:00', end_time: '2023-10-30T11:30', status: 'agendado', color: '#3b82f6' },
-          { id: 3, title: 'Avaliação', client_name: 'Ana Beauty', procedure_name: 'Avaliação Corporal', professional_name: 'Dra. Ana', room: 'Sala 2', start_time: '2023-10-30T14:00', end_time: '2023-10-30T14:45', status: 'realizado', color: '#8b5cf6' },
-        ]})),
-        apiClient.get('/clients').catch(() => ({ data: [{ id: 1, nome: 'Maria Silva' }, { id: 2, nome: 'João Pedro' }, { id: 3, nome: 'Ana Beauty' }] })),
-        apiClient.get('/procedures').catch(() => ({ data: [{ id: 1, name: 'Limpeza de Pele' }, { id: 2, name: 'Botox' }, { id: 3, name: 'Avaliação Corporal' }] })),
-        apiClient.get('/professionals').catch(() => ({ data: [{ id: 1, name: 'Dra. Ana' }, { id: 2, name: 'Dr. Carlos' }] }))
+        apiClient.get('/appointments'),
+        apiClient.get('/clients'),
+        apiClient.get('/procedures'),
+        apiClient.get('/professionals')
       ]);
 
       setAgendamentos(resAgendamentos.data);

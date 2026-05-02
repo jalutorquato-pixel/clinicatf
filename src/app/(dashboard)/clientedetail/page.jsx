@@ -36,11 +36,11 @@ export default function ClienteDetail() {
         resVendas,
         resContratos
       ] = await Promise.all([
-        apiClient.get(`/clients/${id}`).catch(() => ({ data: { id, nome: 'Maria Silva', email: 'maria@example.com', telefone: '(11) 99999-9999', cpf: '111.222.333-44', cidade: 'São Paulo', estado: 'SP', cep: '01001-000', rua: 'Praça da Sé', numero: '1', status: 'ativo', created_at: '2023-10-01T10:00:00' } })),
-        apiClient.get(`/procedure-records?client_id=${id}`).catch(() => ({ data: [] })),
-        apiClient.get(`/appointments?client_id=${id}`).catch(() => ({ data: [] })),
-        apiClient.get(`/sales?client_id=${id}`).catch(() => ({ data: [] })),
-        apiClient.get(`/contracts?client_id=${id}`).catch(() => ({ data: [] })),
+        apiClient.get(`/clients/${id}`),
+        apiClient.get(`/procedure-records?client_id=${id}`),
+        apiClient.get(`/appointments?client_id=${id}`),
+        apiClient.get(`/sales?client_id=${id}`),
+        apiClient.get(`/contracts?client_id=${id}`),
       ]);
 
       setCliente(resCliente.data);

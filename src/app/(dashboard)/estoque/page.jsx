@@ -40,15 +40,8 @@ export default function Estoque() {
     setIsLoading(true);
     try {
       const [resProdutos, resMovimentacoes] = await Promise.all([
-        apiClient.get('/products').catch(() => ({ data: [
-          { id: 1, name: 'Seringa 10ml', category: 'Insumos', sku: 'INS-001', default_price: 2.50, cost_price: 1.00, current_stock: 45, min_stock: 50, is_active: true },
-          { id: 2, name: 'Toxina Botulínica 50U', category: 'Injetáveis', sku: 'INJ-BTX', default_price: 800.00, cost_price: 400.00, current_stock: 12, min_stock: 5, is_active: true },
-          { id: 3, name: 'Creme Hidratante Facial', category: 'Home Care', sku: 'HC-CREME', default_price: 120.00, cost_price: 60.00, current_stock: 3, min_stock: 10, is_active: true }
-        ]})),
-        apiClient.get('/stock-movements').catch(() => ({ data: [
-          { id: 1, product_name: 'Seringa 10ml', type: 'saída', quantity: 5, reason: 'Uso em procedimento', date: '2023-10-25T14:30:00', user_name: 'Admin' },
-          { id: 2, product_name: 'Toxina Botulínica 50U', type: 'entrada', quantity: 10, reason: 'Compra Fornecedor XYZ', date: '2023-10-20T09:15:00', user_name: 'Admin' }
-        ]}))
+        apiClient.get('/products'),
+        apiClient.get('/stock-movements')
       ]);
       setProdutos(resProdutos.data);
       setMovimentacoes(resMovimentacoes.data);

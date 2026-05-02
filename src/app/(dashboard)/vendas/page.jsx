@@ -40,14 +40,8 @@ export default function Vendas() {
     setIsLoading(true);
     try {
       const [resVendas, resClientes] = await Promise.all([
-        apiClient.get('/sales').catch(() => ({ data: [
-          { id: 1, client_name: 'Maria Silva', type: 'venda', status: 'pago', total: 1500.00, due_date: '2023-10-25', payment_method: 'Cartão de Crédito' },
-          { id: 2, client_name: 'João Pedro', type: 'orcamento', status: 'aberto', total: 850.00, due_date: '2023-11-05', payment_method: 'PIX' },
-          { id: 3, client_name: 'Ana Beauty', type: 'venda', status: 'aprovado', total: 320.00, due_date: '2023-10-30', payment_method: 'Boleto' }
-        ]})),
-        apiClient.get('/clients').catch(() => ({ data: [
-          { id: 1, nome: 'Maria Silva' }, { id: 2, nome: 'João Pedro' }, { id: 3, nome: 'Ana Beauty' }
-        ]}))
+        apiClient.get('/sales'),
+        apiClient.get('/clients')
       ]);
       setVendas(resVendas.data);
       setClientes(resClientes.data);
@@ -110,10 +104,7 @@ export default function Vendas() {
       });
       fetchData();
     } catch (error) {
-      // Mock sucesso local
-      showToast(`${formData.type === 'venda' ? 'Venda' : 'Orçamento'} salvo com sucesso!`, 'success');
-      setIsModalOpen(false);
-      fetchData();
+      showToast('Erro ao salvar venda.', 'error');
     } finally {
       setIsSubmitting(false);
     }

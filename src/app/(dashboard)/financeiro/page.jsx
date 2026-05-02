@@ -37,12 +37,7 @@ export default function Financeiro() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const res = await apiClient.get('/account-entries').catch(() => ({ data: [
-        { id: 1, type: 'receita', description: 'Venda de Tratamento (Botox)', category: 'Vendas', due_date: new Date().toISOString().split('T')[0], amount: 600.00, status: 'nao_pago', payment_method: 'Cartão de Crédito' },
-        { id: 2, type: 'despesa', description: 'Conta de Luz', category: 'Fixa', due_date: new Date().toISOString().split('T')[0], amount: 350.00, status: 'nao_pago', payment_method: 'Boleto' },
-        { id: 3, type: 'receita', description: 'Mensalidade Programa', category: 'Assinaturas', due_date: '2023-09-15', amount: 200.00, status: 'pago', payment_method: 'PIX' },
-        { id: 4, type: 'despesa', description: 'Compra de Seringas', category: 'Insumos', due_date: '2023-10-01', amount: 800.00, status: 'nao_pago', payment_method: 'Transferência' }
-      ]}));
+      const res = await apiClient.get('/account-entries');
       setContas(res.data);
     } catch (error) {
       showToast('Erro ao carregar contas financeiras.', 'error');
@@ -69,10 +64,7 @@ export default function Financeiro() {
       setFormData({ type: 'receita', description: '', category: '', due_date: '', amount: '', payment_method: 'PIX', status: 'nao_pago' });
       fetchData();
     } catch (error) {
-      // Mock local
-      showToast('Conta criada com sucesso!', 'success');
-      setIsModalOpen(false);
-      fetchData();
+      showToast('Erro ao criar conta.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -84,9 +76,7 @@ export default function Financeiro() {
       showToast('Conta baixada com sucesso!', 'success');
       fetchData();
     } catch (error) {
-      // Mock Local
-      setContas(prev => prev.map(c => c.id === id ? { ...c, status: 'pago' } : c));
-      showToast('Conta baixada com sucesso!', 'success');
+      showToast('Erro ao baixar conta.', 'error');
     }
   };
 
