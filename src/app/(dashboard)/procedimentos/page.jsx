@@ -38,15 +38,8 @@ export default function Procedimentos() {
     setIsLoading(true);
     try {
       const [resProcedures, resRecords] = await Promise.all([
-        apiClient.get('/procedures').catch(() => ({ data: [
-          { id: 1, name: 'Limpeza de Pele Profunda', category: 'Estética Facial', default_price: 150.00, is_active: true },
-          { id: 2, name: 'Botox (1 Região)', category: 'Injetáveis', default_price: 600.00, is_active: true },
-          { id: 3, name: 'Massagem Relaxante', category: 'Terapia Corporal', default_price: 120.00, is_active: false }
-        ]})),
-        apiClient.get('/procedure-records').catch(() => ({ data: [
-          { id: 1, client_name: 'Maria Silva', procedure_name: 'Limpeza de Pele Profunda', date: '2023-10-25T10:00', amount_charged: 150.00, professional_name: 'Dra. Ana', status: 'realizado' },
-          { id: 2, client_name: 'João Pedro', procedure_name: 'Botox (1 Região)', date: '2023-10-24T14:30', amount_charged: 550.00, professional_name: 'Dr. Carlos', status: 'agendado' }
-        ]}))
+        apiClient.get('/procedures'),
+        apiClient.get('/procedure-records')
       ]);
 
       setProcedimentos(resProcedures.data);
