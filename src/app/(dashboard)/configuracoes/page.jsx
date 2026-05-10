@@ -46,8 +46,7 @@ export default function Configuracoes() {
       await apiClient.put('/settings', settings);
       showToast('Configurações atualizadas com sucesso!', 'success');
     } catch (error) {
-      // Fallback para mock
-      showToast('Configurações atualizadas com sucesso!', 'success');
+      showToast('Erro ao salvar configurações.', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -59,11 +58,9 @@ export default function Configuracoes() {
       await apiClient.post('/settings/backup');
       showToast('Backup gerado e salvo com sucesso!', 'success');
     } catch (error) {
-      // Fallback
-      setTimeout(() => {
-        showToast('Backup gerado e salvo na nuvem com sucesso!', 'success');
-        setIsBackingUp(false);
-      }, 1500);
+      showToast('Erro ao gerar backup.', 'error');
+    } finally {
+      setIsBackingUp(false);
     }
   };
 

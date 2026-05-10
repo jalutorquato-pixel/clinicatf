@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Copy, Trophy, Target, Users, TrendingUp, DollarSign, Star, Gift, CheckCircle } from 'lucide-react';
 import apiClient from "../../../api/client";
 import { MetricCard, DataTable, StatusBadge, Toast } from '../../../components/ui';
@@ -25,47 +25,8 @@ export default function EmbaixadoraDashboard() {
       setDashboardData(response.data);
     } catch (error) {
       console.error('Erro ao buscar dashboard da embaixadora:', error);
-      showToast('Erro ao carregar dados. Usando dados de teste.', 'error');
-      
-      // Mock de dados caso a API não esteja pronta
-      setDashboardData({
-        ambassador: {
-          id: id,
-          public_name: 'Ana Beauty',
-          coupon_code: 'ANAB10',
-          level: 'avançada',
-          status: 'ativa',
-          link: `https://clinica.com/indica/ANAB10`
-        },
-        metrics: {
-          current_cycle_points: 450,
-          historical_points: 1200,
-          ranking_position: 3,
-          total_referrals: 25,
-          valid_referrals: 18,
-          conversion_rate: 72.0,
-          generated_revenue: 4500.00
-        },
-        benefits: {
-          next_benefit: {
-            name: 'Limpeza de Pele Profunda',
-            points_required: 500,
-            points_remaining: 50
-          },
-          earned_benefits: [
-            { id: 1, name: 'Sessão de Laser', status: 'utilizado', date_earned: '2023-08-15' },
-            { id: 2, name: 'Peeling Químico', status: 'agendado', date_earned: '2023-10-05' },
-            { id: 3, name: 'Massagem Relaxante', status: 'conquistado', date_earned: '2023-10-20' }
-          ]
-        },
-        credits: {
-          available_amount: 150.00
-        },
-        referred_clients: [
-          { id: 1, name: 'Carlos Santos', date: '2023-10-15', status: 'compra_realizada', points_generated: 50, revenue: 200.00 },
-          { id: 2, name: 'Mariana Lima', date: '2023-10-22', status: 'agendado', points_generated: 0, revenue: 0.00 }
-        ]
-      });
+      showToast('Erro ao carregar dados da embaixadora.', 'error');
+      setDashboardData(null);
     } finally {
       setIsLoading(false);
     }

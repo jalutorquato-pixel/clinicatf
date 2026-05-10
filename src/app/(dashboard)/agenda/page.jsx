@@ -81,10 +81,7 @@ export default function Agenda() {
       setFormData({ title: '', client_id: '', procedure_id: '', professional_id: '', room: '', start_time: '', end_time: '', status: 'agendado', color: '#1D9E75', notes: '' });
       fetchData();
     } catch (error) {
-      // Mock de sucesso local
-      showToast('Agendamento criado com sucesso!', 'success');
-      setIsModalOpen(false);
-      fetchData();
+      showToast('Erro ao criar agendamento.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -96,9 +93,7 @@ export default function Agenda() {
       showToast(`Status atualizado para ${newStatus.replace('_', ' ')}`, 'success');
       fetchData();
     } catch (error) {
-      // Atualização local caso a API não exista
-      setAgendamentos(prev => prev.map(ag => ag.id === id ? { ...ag, status: newStatus } : ag));
-      showToast(`Status atualizado para ${newStatus.replace('_', ' ')}`, 'success');
+      showToast('Erro ao atualizar status do agendamento.', 'error');
     }
   };
 

@@ -13,8 +13,26 @@ model User {
   hashed_password String
   is_active       Boolean  @default(true)
   created_at      DateTime @default(now())
+  roles           Role[]   @relation("UserRoles")
 
   @@map("users")
+}
+
+model Role {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  permissions Permission[] @relation("RolePermissions")
+  users       User[]       @relation("UserRoles")
+
+  @@map("roles")
+}
+
+model Permission {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  roles Role[] @relation("RolePermissions")
+
+  @@map("permissions")
 }
 
 model Client {

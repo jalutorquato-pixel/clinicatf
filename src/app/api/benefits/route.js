@@ -19,7 +19,10 @@ export async function GET(req) {
 
   try {
     const benefits = await prisma.benefit.findMany({ orderBy: { id: 'asc' } });
-    return NextResponse.json(benefits);
+    return NextResponse.json(benefits.map(benefit => ({
+      ...benefit,
+      points_required: benefit.required_points
+    })));
   } catch (error) {
     return NextResponse.json({ detail: "Internal Server Error" }, { status: 500 });
   }

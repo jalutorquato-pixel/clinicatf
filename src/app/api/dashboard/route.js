@@ -1,55 +1,113 @@
 import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+import jwt from 'jsonwebtoken';
 
-export async function GET() {
-  // Retorna os dados mockados do dashboard como no backend/frontend original
-  return NextResponse.json({
-    metrics: {
-      total_clientes: 1240,
-      embaixadoras_ativas: 45,
-      indicacoes_mes: 120,
-      indicacoes_validas_mes: 85,
-      taxa_conversao: 70.8,
-      procedimentos_mes: 312,
-      receita_indicados: 45200.00,
-      beneficios_pendentes: 12,
-      contratos_pendentes: 5
-    },
-    charts: {
-      indicacoes_por_mes: [
-        { mes: 'Mai', indicacoes: 65, validas: 40 },
-        { mes: 'Jun', indicacoes: 78, validas: 50 },
-        { mes: 'Jul', indicacoes: 90, validas: 62 },
-        { mes: 'Ago', indicacoes: 105, validas: 75 },
-        { mes: 'Set', indicacoes: 110, validas: 80 },
-        { mes: 'Out', indicacoes: 120, validas: 85 }
-      ],
-      procedimentos_tipo: [
-        { name: 'Botox', value: 45 },
-        { name: 'Limpeza de Pele', value: 25 },
-        { name: 'Preenchimento', value: 20 },
-        { name: 'Laser', value: 10 }
-      ],
-      pontos_embaixadora: [
-        { nome: 'Ana Beauty', pontos: 1250 },
-        { nome: 'Maria S.', pontos: 950 },
-        { nome: 'Clara M.', pontos: 800 },
-        { nome: 'Juliana', pontos: 600 },
-        { nome: 'Bia Clinic', pontos: 450 }
-      ],
-      receita_embaixadora: [
-        { nome: 'Ana Beauty', receita: 12500 },
-        { nome: 'Maria S.', receita: 9000 },
-        { nome: 'Clara M.', receita: 7500 },
-        { nome: 'Juliana', receita: 5800 },
-        { nome: 'Bia Clinic', receita: 4000 }
-      ]
-    },
-    ranking_ciclo: [
-      { posicao: 1, embaixadora: 'Ana Beauty', nivel: 'Elite', pontos: 1250 },
-      { posicao: 2, embaixadora: 'Maria Silva', nivel: 'Avançada', pontos: 950 },
-      { posicao: 3, embaixadora: 'Clara Marques', nivel: 'Avançada', pontos: 800 },
-      { posicao: 4, embaixadora: 'Juliana Castro', nivel: 'Comum', pontos: 600 },
-      { posicao: 5, embaixadora: 'Bia Clinic', nivel: 'Comum', pontos: 450 }
-    ]
-  });
+const SECRET_KEY = process.env.SECRET_KEY || 'supersecret';
+export const dynamic = 'force-dynamic';
+
+async function getUser(req) {
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  try { return jwt.verify(authHeader.split(' ')[1], SECRET_KEY); } catch (e) { return null; }
+}
+
+function monthKey(date) {
+  return new Date(date).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+}
+
+export async function GET(req) {
+  const user = await getUser(req);
+  if (!user) return NextResponse.json({ detail: "Não autorizado" }, { status: 401 });
+
+  try {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+    const [
+      totalClientes,
+      embaixadorasAtivas,
+      referrals,
+      procedureRecords,
+      sales,
+      earnedBenefitsPending,
+      contractsPending,
+      ambassadors
+    ] = await Promise.all([
+      prisma.client.count({ where: { is_active: true } }),
+      prisma.ambassador.count({ where: { status: 'ativa' } }),
+      prisma.referral.findMany({
+        where: { referred_at: { gte: sixMonthsAgo } },
+        include: { ambassador: true }
+      }),
+      prisma.procedureRecord.findMany({
+        where: { date: { gte: sixMonthsAgo } },
+        include: { procedure: true }
+      }),
+      prisma.sale.findMany({ where: { sale_date: { gte: sixMonthsAgo } }, include: { client: true } }),
+      prisma.earnedBenefit.count({ where: { status: 'conquistado' } }),
+      prisma.generatedContract.count({ where: { status: { in: ['gerado', 'impresso'] } } }),
+      prisma.ambassador.findMany({ include: { points: true } })
+    ]);
+
+    const referralsMonth = referrals.filter(ref => new Date(ref.referred_at) >= monthStart);
+    const validReferralsMonth = referralsMonth.filter(ref => ref.status === 'ponto_validado' || ref.generated_point);
+    const proceduresMonth = procedureRecords.filter(record => new Date(record.date) >= monthStart);
+    const receitaIndicados = sales.reduce((sum, sale) => sum + sale.total, 0);
+
+    const monthBuckets = Array.from({ length: 6 }, (_, index) => {
+      const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1);
+      return { key: `${date.getFullYear()}-${date.getMonth()}`, mes: monthKey(date), indicacoes: 0, validas: 0 };
+    });
+
+    referrals.forEach(ref => {
+      const date = new Date(ref.referred_at);
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      const bucket = monthBuckets.find(item => item.key === key);
+      if (bucket) {
+        bucket.indicacoes += 1;
+        if (ref.status === 'ponto_validado' || ref.generated_point) bucket.validas += 1;
+      }
+    });
+
+    const procedureMap = new Map();
+    procedureRecords.forEach(record => {
+      const name = record.procedure?.name || 'Procedimento';
+      procedureMap.set(name, (procedureMap.get(name) || 0) + 1);
+    });
+
+    const ambassadorRanking = ambassadors
+      .map(ambassador => ({
+        posicao: 0,
+        embaixadora: ambassador.public_name,
+        nivel: ambassador.level,
+        pontos: ambassador.points.reduce((sum, point) => sum + point.points, 0)
+      }))
+      .sort((a, b) => b.pontos - a.pontos)
+      .map((row, index) => ({ ...row, posicao: index + 1 }));
+
+    return NextResponse.json({
+      metrics: {
+        total_clientes: totalClientes,
+        embaixadoras_ativas: embaixadorasAtivas,
+        indicacoes_mes: referralsMonth.length,
+        indicacoes_validas_mes: validReferralsMonth.length,
+        taxa_conversao: referralsMonth.length ? Number(((validReferralsMonth.length / referralsMonth.length) * 100).toFixed(1)) : 0,
+        procedimentos_mes: proceduresMonth.length,
+        receita_indicados: receitaIndicados,
+        beneficios_pendentes: earnedBenefitsPending,
+        contratos_pendentes: contractsPending
+      },
+      charts: {
+        indicacoes_por_mes: monthBuckets.map(({ key, ...bucket }) => bucket),
+        procedimentos_tipo: Array.from(procedureMap.entries()).map(([name, value]) => ({ name, value })).slice(0, 6),
+        pontos_embaixadora: ambassadorRanking.slice(0, 5).map(row => ({ nome: row.embaixadora, pontos: row.pontos })),
+        receita_embaixadora: sales.slice(0, 5).map(sale => ({ nome: sale.client?.full_name || 'Avulso', receita: sale.total }))
+      },
+      ranking_ciclo: ambassadorRanking.slice(0, 10)
+    });
+  } catch (error) {
+    console.error("Erro no dashboard:", error);
+    return NextResponse.json({ detail: "Internal Server Error" }, { status: 500 });
+  }
 }

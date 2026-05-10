@@ -20,12 +20,7 @@ export default function Ciclos() {
       setCiclos(res.data);
     } catch (error) {
       showToast('Erro ao carregar ciclos.', 'error');
-      // Mock Data
-      setCiclos([
-        { id: 1, name: 'Ciclo Q3 2023', start_date: '2023-07-01', end_date: '2023-09-30', status: 'encerrado' },
-        { id: 2, name: 'Ciclo Q4 2023', start_date: '2023-10-01', end_date: '2023-12-31', status: 'ativo' },
-        { id: 3, name: 'Ciclo Q1 2024', start_date: '2024-01-01', end_date: '2024-03-31', status: 'futuro' }
-      ]);
+      setCiclos([]);
     } finally {
       setIsLoading(false);
     }
@@ -39,9 +34,7 @@ export default function Ciclos() {
       showToast(`Ciclo atualizado para ${newStatus}`, 'success');
       fetchCiclos();
     } catch (error) {
-      // Mock Local Update
-      setCiclos(prev => prev.map(c => c.id === id ? { ...c, status: newStatus } : c));
-      showToast(`Ciclo atualizado para ${newStatus}`, 'success');
+      showToast('Erro ao atualizar ciclo.', 'error');
     }
   };
 

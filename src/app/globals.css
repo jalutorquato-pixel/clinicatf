@@ -570,3 +570,43 @@ body {
   padding-top: 1rem;
   border-top: 1px solid #e5e7eb;
 }
+
+/* Ajustes Responsivos (Mobile) */
+@media (max-width: 1024px) {
+  .mobile-top-bar {
+    display: flex;
+  }
+
+  .app-container {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: 10px 0 15px -3px rgba(0, 0, 0, 0.1);
+  }
+
+  .sidebar.show {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+    z-index: 999;
+  }
+
+  .main-content {
+    padding: 1.5rem 1rem;
+  }
+}

@@ -10,11 +10,7 @@ async function getUser(req) {
   const authHeader = req.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
   const token = authHeader.split(' ')[1];
-  try {
-    return jwt.verify(token, SECRET_KEY);
-  } catch (e) {
-    return null;
-  }
+  try { return jwt.verify(token, SECRET_KEY); } catch (e) { return null; }
 }
 
 export async function GET(req) {
@@ -24,41 +20,19 @@ export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const clientId = searchParams.get('client_id');
-    const parsedClientId = clientId ? Number(clientId) : null;
-
-    if (clientId && (!Number.isInteger(parsedClientId) || parsedClientId <= 0)) {
-      return NextResponse.json({ detail: "client_id inválido" }, { status: 400 });
+    
+    let where = {};
+    if (clientId) {
+      where.client_id = parseInt(clientId);
     }
 
-    const procedureRecords = await prisma.procedureRecord.findMany({
-      where: parsedClientId ? { client_id: parsedClientId } : undefined,
-      include: {
-        client: {
-          select: { full_name: true }
-        },
-        procedure: {
-          select: { name: true }
-        }
-      },
-      orderBy: { date: 'desc' }
+    const records = await prisma.procedureRecord.findMany({
+      where,
+      include: { client: { select: { full_name: true } }, procedure: { select: { name: true } } },
     });
-
-    // Mapear os resultados para o formato que o frontend espera (similar ao que foi mockado)
-    const formattedRecords = procedureRecords.map(record => ({
-      id: record.id,
-      client_id: record.client_id,
-      client_name: record.client?.full_name || 'Desconhecido',
-      procedure_name: record.procedure?.name || 'Desconhecido',
-      date: record.date,
-      amount_charged: record.charged_value,
-      professional_name: record.professional,
-      status: record.status,
-      notes: record.notes
-    }));
-
-    return NextResponse.json(formattedRecords);
+    return NextResponse.json(records);
   } catch (error) {
-    console.error("Erro ao buscar procedure-records:", error);
+    console.error(error);
     return NextResponse.json({ detail: "Internal Server Error" }, { status: 500 });
   }
 }

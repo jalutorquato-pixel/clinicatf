@@ -45,11 +45,7 @@ export default function Clientes() {
     } catch (error) {
       console.error('Erro ao buscar clientes:', error);
       showToast('Erro ao carregar clientes.', 'error');
-      // Mock para teste caso a API não esteja pronta:
-      setClientes([
-        { id: 1, nome: 'Maria Silva', telefone: '(11) 98765-4321', cpf: '111.222.333-44', cidade: 'São Paulo', status: 'ativo', created_at: '2023-10-01T10:00:00' },
-        { id: 2, nome: 'João Pedro', telefone: '(21) 99999-8888', cpf: '555.666.777-88', cidade: 'Rio de Janeiro', status: 'inativo', created_at: '2023-09-15T14:30:00' }
-      ]);
+      setClientes([]);
     } finally {
       setIsLoading(false);
     }

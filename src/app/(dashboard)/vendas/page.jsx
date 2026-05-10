@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Plus, ShoppingCart, FileText, Trash2, Edit } from 'lucide-react';
+import { Plus, ShoppingCart, FileText, Trash2, Eye } from 'lucide-react';
 import apiClient from "../../../api/client";
 import { 
   DataTable, 
@@ -17,6 +17,7 @@ export default function Vendas() {
   const [activeTab, setActiveTab] = useState('venda'); // venda ou orcamento
   
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSale, setSelectedSale] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState({ message: '', type: '' });
@@ -121,8 +122,8 @@ export default function Vendas() {
     {
       header: 'Ações',
       render: (row) => (
-        <button className="btn-icon" onClick={() => showToast(`Visualizar ID ${row.id} em breve.`, 'info')} title="Visualizar">
-          <Edit size={16} />
+        <button className="btn-icon" onClick={() => setSelectedSale(row)} title="Visualizar">
+          <Eye size={16} />
         </button>
       )
     }
@@ -260,6 +261,51 @@ export default function Vendas() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      <Modal open={!!selectedSale} onClose={() => setSelectedSale(null)} title={`${selectedSale?.type === 'orcamento' ? 'Orçamento' : 'Venda'} #${selectedSale?.id || ''}`}>
+        {selectedSale && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="grid-2-cols">
+              <div>
+                <strong>Cliente</strong>
+                <p>{selectedSale.client_name || 'Avulso'}</p>
+              </div>
+              <div>
+                <strong>Status</strong>
+                <p><StatusBadge status={selectedSale.status} /></p>
+              </div>
+              <div>
+                <strong>Vencimento</strong>
+                <p>{selectedSale.due_date ? new Date(selectedSale.due_date).toLocaleDateString('pt-BR') : 'N/A'}</p>
+              </div>
+              <div>
+                <strong>Total</strong>
+                <p>R$ {parseFloat(selectedSale.total || 0).toFixed(2)}</p>
+              </div>
+            </div>
+
+            <div>
+              <strong>Itens</strong>
+              <DataTable
+                columns={[
+                  { header: 'Descrição', accessor: 'description' },
+                  { header: 'Qtd.', render: (row) => row.quantity },
+                  { header: 'Unitário', render: (row) => `R$ ${parseFloat(row.unit_price || 0).toFixed(2)}` },
+                  { header: 'Total', render: (row) => `R$ ${parseFloat(row.total || 0).toFixed(2)}` },
+                ]}
+                data={selectedSale.items || []}
+              />
+            </div>
+
+            {selectedSale.notes && (
+              <div>
+                <strong>Observações</strong>
+                <p style={{ color: '#4b5563' }}>{selectedSale.notes}</p>
+              </div>
+            )}
+          </div>
+        )}
       </Modal>
 
       <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: '' })} />

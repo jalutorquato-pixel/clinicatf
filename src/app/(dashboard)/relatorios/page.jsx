@@ -41,55 +41,84 @@ export default function Relatorios() {
     const report = reportsList.find(r => r.id === activeReport);
     
     try {
-      // Aqui passaríamos start_date e end_date como params reais para a API
-      // const params = { start_date: dateFilter.start_date, end_date: dateFilter.end_date };
-      // const res = await apiClient.get(report.endpoint, { params });
-      // setData(res.data);
-      
-      // MOCK DATA PARA DEMONSTRAÇÃO BASEADO NO TIPO
-      await new Promise(r => setTimeout(r, 600)); // Simulando delay de rede
-      
-      let mockData = [];
-      if (activeReport === 'clientes') {
-        mockData = [
-          { id: 1, nome: 'Ana Souza', telefone: '(11) 99999-9999', cidade: 'São Paulo', data_cadastro: '2023-10-01', status: 'ativo' },
-          { id: 2, nome: 'Carlos Silva', telefone: '(11) 98888-8888', cidade: 'Campinas', data_cadastro: '2023-10-15', status: 'inativo' }
-        ];
-      } else if (activeReport === 'indicacoes') {
-        mockData = [
-          { id: 1, data: '2023-10-20', embaixadora: 'Maria Beauty', indicado: 'Joana Costa', canal: 'Instagram', status: 'ponto_validado' },
-          { id: 2, data: '2023-10-22', embaixadora: 'Bia Clinic', indicado: 'Fernando', canal: 'WhatsApp', status: 'cancelada' }
-        ];
-      } else if (activeReport === 'procedimentos') {
-        mockData = [
-          { id: 1, data: '2023-10-10', cliente: 'Joana Costa', procedimento: 'Botox 50U', profissional: 'Dra. Ana', valor: 850.00 },
-          { id: 2, data: '2023-10-11', cliente: 'Carlos Silva', procedimento: 'Limpeza de Pele', profissional: 'Fátima Esteticista', valor: 120.00 }
-        ];
-      } else if (activeReport === 'pontos') {
-        mockData = [
-          { id: 1, data: '2023-10-21', embaixadora: 'Maria Beauty', ciclo: 'Outubro/2023', pontos: 150, indicação_id: 101 },
-          { id: 2, data: '2023-10-25', embaixadora: 'Bia Clinic', ciclo: 'Outubro/2023', pontos: 50, indicação_id: 105 }
-        ];
-      } else if (activeReport === 'beneficios') {
-        mockData = [
-          { id: 1, data_resgate: '2023-10-26', embaixadora: 'Maria Beauty', beneficio: 'Limpeza de Pele Grátis', pontos_gastos: 300, status: 'agendado' }
-        ];
-      } else if (activeReport === 'receita') {
-        mockData = [
-          { embaixadora: 'Maria Beauty', indicacoes_pagas: 5, receita_gerada: 4250.00, comissao_teorica: 425.00 },
-          { embaixadora: 'Bia Clinic', indicacoes_pagas: 2, receita_gerada: 1200.00, comissao_teorica: 120.00 }
-        ];
-      } else if (activeReport === 'ranking') {
-        mockData = [
-          { posicao: 1, embaixadora: 'Maria Beauty', nivel: 'Elite', pontos_ciclo: 1250, pontos_historicos: 4500 },
-          { posicao: 2, embaixadora: 'Bia Clinic', nivel: 'Avançada', pontos_ciclo: 850, pontos_historicos: 1200 },
-          { posicao: 3, embaixadora: 'Clara Alves', nivel: 'Comum', pontos_ciclo: 150, pontos_historicos: 150 }
-        ];
-      }
-      
-      setData(mockData);
+      const res = await apiClient.get(report.endpoint);
+      const rows = Array.isArray(res.data) ? res.data : [];
+
+      const mapped = rows.map((row, index) => {
+        if (activeReport === 'clientes') {
+          return {
+            id: row.id,
+            nome: row.full_name || row.nome,
+            telefone: row.phone || row.telefone,
+            cidade: row.city || row.cidade,
+            data_cadastro: row.created_at,
+            status: row.is_active === false ? 'inativo' : 'ativo'
+          };
+        }
+        if (activeReport === 'indicacoes') {
+          return {
+            id: row.id,
+            data: row.created_at || row.referred_at,
+            embaixadora: row.ambassador_name || row.ambassador?.public_name,
+            indicado: row.referred_name,
+            canal: row.channel,
+            status: row.status
+          };
+        }
+        if (activeReport === 'procedimentos') {
+          return {
+            id: row.id,
+            data: row.date,
+            cliente: row.client_name,
+            procedimento: row.procedure_name,
+            profissional: row.professional_name,
+            valor: row.amount_charged || 0
+          };
+        }
+        if (activeReport === 'pontos') {
+          return {
+            id: row.id,
+            data: row.date,
+            embaixadora: row.ambassador_name,
+            ciclo: row.cycle_name,
+            pontos: row.points,
+            indicação_id: row.referral_id || row.id
+          };
+        }
+        if (activeReport === 'beneficios') {
+          return {
+            id: row.id,
+            data_resgate: row.date_earned,
+            embaixadora: row.ambassador_name,
+            beneficio: row.benefit_name,
+            pontos_gastos: row.points_spent || 0,
+            status: row.status
+          };
+        }
+        if (activeReport === 'receita') {
+          return {
+            embaixadora: row.client_name || row.client?.full_name || 'Avulso',
+            indicacoes_pagas: row.status === 'pago' ? 1 : 0,
+            receita_gerada: row.total || 0,
+            comissao_teorica: (row.total || 0) * 0.1
+          };
+        }
+        if (activeReport === 'ranking') {
+          return {
+            posicao: index + 1,
+            embaixadora: row.public_name,
+            nivel: row.level,
+            pontos_ciclo: row.current_points || 0,
+            pontos_historicos: row.current_points || 0
+          };
+        }
+        return row;
+      });
+
+      setData(mapped);
     } catch (error) {
       console.error(error);
+      setData([]);
     } finally {
       setIsLoading(false);
     }

@@ -27,6 +27,7 @@ export default function Atendimento() {
   // UI States
   const [isAnamneseModalOpen, setIsAnamneseModalOpen] = useState(false);
   const [isReceitaModalOpen, setIsReceitaModalOpen] = useState(false);
+  const [editingAnamnese, setEditingAnamnese] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState({ message: '', type: '' });
@@ -71,20 +72,76 @@ export default function Atendimento() {
 
   const showToast = (message, type = 'info') => setToast({ message, type });
 
+  const openAnamneseModal = (record = null) => {
+    setEditingAnamnese(record);
+    setAnamneseForm(record ? {
+      client_id: record.client_id || '',
+      template_id: record.template_id || '',
+      title: record.title || '',
+      answers: record.answers || '{}',
+      status: record.status || 'pendente'
+    } : {
+      client_id: '', template_id: '', title: '', answers: '{}', status: 'pendente'
+    });
+    setIsAnamneseModalOpen(true);
+  };
+
+  const closeAnamneseModal = () => {
+    setIsAnamneseModalOpen(false);
+    setEditingAnamnese(null);
+    setAnamneseForm({ client_id: '', template_id: '', title: '', answers: '{}', status: 'pendente' });
+  };
+
+  const handlePrintReceita = (row) => {
+    const printWindow = window.open('', '_blank', 'width=820,height=900');
+    if (!printWindow) {
+      showToast('Não foi possível abrir a janela de impressão.', 'error');
+      return;
+    }
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${row.title || 'Receita'}</title>
+          <style>
+            body { font-family: Arial, sans-serif; color: #111827; padding: 32px; line-height: 1.6; }
+            h1 { font-size: 22px; margin-bottom: 4px; }
+            .meta { color: #4b5563; margin-bottom: 24px; }
+            pre { white-space: pre-wrap; font-family: Arial, sans-serif; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <h1>${row.title || 'Receita'}</h1>
+          <div class="meta">
+            <strong>Paciente:</strong> ${row.client_name || ''}<br />
+            <strong>Profissional:</strong> ${row.professional_name || ''}<br />
+            <strong>Data:</strong> ${row.date ? new Date(row.date).toLocaleDateString('pt-BR') : ''}
+          </div>
+          <pre>${row.content || ''}</pre>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  };
+
   // Handles de Submissão
   const handleAnamneseSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await apiClient.post('/anamnesis-records', anamneseForm);
-      showToast('Anamnese registrada com sucesso!', 'success');
-      setIsAnamneseModalOpen(false);
-      setAnamneseForm({ client_id: '', template_id: '', title: '', answers: '{}', status: 'pendente' });
+      if (editingAnamnese) {
+        await apiClient.put(`/anamnesis-records/${editingAnamnese.id}`, anamneseForm);
+        showToast('Anamnese atualizada com sucesso!', 'success');
+      } else {
+        await apiClient.post('/anamnesis-records', anamneseForm);
+        showToast('Anamnese registrada com sucesso!', 'success');
+      }
+      closeAnamneseModal();
       fetchData();
     } catch (error) {
-      showToast('Anamnese registrada com sucesso!', 'success');
-      setIsAnamneseModalOpen(false);
-      fetchData();
+      showToast('Erro ao salvar anamnese.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -117,7 +174,7 @@ export default function Atendimento() {
     {
       header: 'Ações',
       render: (row) => (
-        <button className="btn-icon" onClick={() => showToast(`Editar Anamnese #${row.id} em breve`, 'info')} title="Visualizar/Editar">
+        <button className="btn-icon" onClick={() => openAnamneseModal(row)} title="Visualizar/Editar">
           <Edit size={16} />
         </button>
       )
@@ -133,7 +190,7 @@ export default function Atendimento() {
     {
       header: 'Ações',
       render: (row) => (
-        <button className="btn-icon" onClick={() => showToast(`Imprimir Receita #${row.id} em breve`, 'info')} title="Imprimir">
+        <button className="btn-icon" onClick={() => handlePrintReceita(row)} title="Imprimir">
           <FileText size={16} />
         </button>
       )
@@ -149,7 +206,7 @@ export default function Atendimento() {
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           {activeTab === 'anamnese' ? (
-            <button className="btn-primary flex-center" onClick={() => setIsAnamneseModalOpen(true)}>
+            <button className="btn-primary flex-center" onClick={() => openAnamneseModal()}>
               <Plus size={18} style={{ marginRight: '0.5rem' }} /> Nova Anamnese
             </button>
           ) : (
@@ -182,7 +239,7 @@ export default function Atendimento() {
       </div>
 
       {/* Modal de Nova Anamnese */}
-      <Modal open={isAnamneseModalOpen} onClose={() => setIsAnamneseModalOpen(false)} title="Preencher Nova Anamnese">
+      <Modal open={isAnamneseModalOpen} onClose={closeAnamneseModal} title={editingAnamnese ? "Editar Anamnese" : "Preencher Nova Anamnese"}>
         <form className="form-grid" onSubmit={handleAnamneseSubmit}>
           <div className="grid-2-cols">
             <FormField label="Cliente">
@@ -226,8 +283,8 @@ export default function Atendimento() {
           </FormField>
 
           <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={() => setIsAnamneseModalOpen(false)} disabled={isSubmitting}>Cancelar</button>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>{isSubmitting ? 'Salvando...' : 'Salvar Ficha'}</button>
+            <button type="button" className="btn-secondary" onClick={closeAnamneseModal} disabled={isSubmitting}>Cancelar</button>
+            <button type="submit" className="btn-primary" disabled={isSubmitting}>{isSubmitting ? 'Salvando...' : (editingAnamnese ? 'Atualizar Ficha' : 'Salvar Ficha')}</button>
           </div>
         </form>
       </Modal>

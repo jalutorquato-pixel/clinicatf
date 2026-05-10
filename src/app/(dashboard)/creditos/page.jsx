@@ -18,12 +18,7 @@ export default function Creditos() {
       const res = await apiClient.get('/credits');
       setCreditos(res.data);
     } catch (error) {
-      // Mock Data
-      setCreditos([
-        { id: 1, ambassador_name: 'Ana Beauty', type: 'entrada', amount: 100.00, date: '2023-10-15T10:00:00', description: 'Conversão do benefício ID 3' },
-        { id: 2, ambassador_name: 'Ju Indica', type: 'entrada', amount: 50.00, date: '2023-10-20T14:30:00', description: 'Bônus de aniversário' },
-        { id: 3, ambassador_name: 'Ana Beauty', type: 'uso', amount: 45.00, date: '2023-10-25T11:00:00', description: 'Abatimento no procedimento X' }
-      ]);
+      setCreditos([]);
     } finally {
       setIsLoading(false);
     }

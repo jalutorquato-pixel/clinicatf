@@ -20,19 +20,24 @@ export async function GET(req) {
   try {
     const benefits = await prisma.earnedBenefit.findMany({ 
       include: { 
-        client: { select: { full_name: true } },
+        ambassador: {
+          include: {
+            client: { select: { full_name: true } }
+          }
+        },
         benefit: { select: { name: true, type: true } }
       },
-      orderBy: { created_at: 'desc' } 
+      orderBy: { earned_at: 'desc' }
     });
     
     const formatted = benefits.map(b => ({
       id: b.id,
-      client_name: b.client?.full_name,
+      ambassador_name: b.ambassador?.public_name,
+      client_name: b.ambassador?.client?.full_name,
       benefit_name: b.benefit?.name,
       benefit_type: b.benefit?.type,
       status: b.status,
-      date_earned: b.created_at,
+      date_earned: b.earned_at,
       date_used: b.used_at
     }));
 

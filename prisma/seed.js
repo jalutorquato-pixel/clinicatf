@@ -4,6 +4,37 @@ const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function main() {
+  // Criar Permissões Iniciais
+  const permissionsData = [
+    { name: 'admin:access' },
+    { name: 'users:manage' },
+    { name: 'finance:view' },
+    { name: 'finance:edit' },
+    { name: 'clients:view' },
+    { name: 'clients:edit' },
+  ];
+
+  for (const p of permissionsData) {
+    await prisma.permission.upsert({
+      where: { name: p.name },
+      update: {},
+      create: p,
+    });
+  }
+
+  // Criar Papel Admin com todas as permissões
+  const allPermissions = await prisma.permission.findMany();
+  const adminRole = await prisma.role.upsert({
+    where: { name: 'admin' },
+    update: {
+      permissions: { set: allPermissions.map(p => ({ id: p.id })) }
+    },
+    create: {
+      name: 'admin',
+      permissions: { connect: allPermissions.map(p => ({ id: p.id })) }
+    },
+  });
+
   // Criar Usuário Admin
   const adminExists = await prisma.user.findUnique({
     where: { username: 'admin' },
@@ -15,6 +46,7 @@ async function main() {
       data: {
         username: 'admin',
         hashed_password: hashedPassword,
+        roles: { connect: { id: adminRole.id } }
       },
     });
     console.log('Usuário admin criado (admin / admin123)');

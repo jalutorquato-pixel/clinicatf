@@ -17,6 +17,7 @@ export default function Procedimentos() {
   const [activeTab, setActiveTab] = useState('catalogo'); // 'catalogo' ou 'registros'
   
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProcedure, setEditingProcedure] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState({ message: '', type: '' });
@@ -53,6 +54,24 @@ export default function Procedimentos() {
 
   const showToast = (message, type = 'info') => setToast({ message, type });
 
+  const openProcedureModal = (procedure = null) => {
+    setEditingProcedure(procedure);
+    setFormData(procedure ? {
+      name: procedure.name || '',
+      category: procedure.category || '',
+      description: procedure.description || '',
+      default_price: procedure.default_price || '',
+      is_active: procedure.is_active ?? true
+    } : {
+      name: '',
+      category: '',
+      description: '',
+      default_price: '',
+      is_active: true
+    });
+    setIsModalOpen(true);
+  };
+
   const handleFormChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({ 
@@ -66,16 +85,19 @@ export default function Procedimentos() {
     setIsSubmitting(true);
     
     try {
-      await apiClient.post('/procedures', formData);
-      showToast('Procedimento cadastrado com sucesso!', 'success');
+      if (editingProcedure) {
+        await apiClient.put(`/procedures/${editingProcedure.id}`, formData);
+        showToast('Procedimento atualizado com sucesso!', 'success');
+      } else {
+        await apiClient.post('/procedures', formData);
+        showToast('Procedimento cadastrado com sucesso!', 'success');
+      }
       setIsModalOpen(false);
+      setEditingProcedure(null);
       setFormData({ name: '', category: '', description: '', default_price: '', is_active: true });
       fetchData();
     } catch (error) {
-      // Mock sucesso local
-      showToast('Procedimento cadastrado com sucesso!', 'success');
-      setIsModalOpen(false);
-      fetchData();
+      showToast('Erro ao salvar procedimento.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -90,7 +112,7 @@ export default function Procedimentos() {
     {
       header: 'Ações',
       render: (row) => (
-        <button className="btn-icon" onClick={() => showToast(`Editar ${row.name} em breve`, 'info')} title="Editar">
+        <button className="btn-icon" onClick={() => openProcedureModal(row)} title="Editar">
           <Edit size={16} />
         </button>
       )
@@ -115,7 +137,7 @@ export default function Procedimentos() {
           <p className="page-subtitle">Gerencie o catálogo de serviços e o histórico de execuções</p>
         </div>
         {activeTab === 'catalogo' && (
-          <button className="btn-primary flex-center" onClick={() => setIsModalOpen(true)}>
+          <button className="btn-primary flex-center" onClick={() => openProcedureModal()}>
             <Plus size={18} style={{ marginRight: '0.5rem' }} />
             Novo Procedimento
           </button>
@@ -143,7 +165,14 @@ export default function Procedimentos() {
         </div>
       </div>
 
-      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title="Novo Procedimento">
+      <Modal
+        open={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingProcedure(null);
+        }}
+        title={editingProcedure ? "Editar Procedimento" : "Novo Procedimento"}
+      >
         <form className="form-grid" onSubmit={handleSubmit}>
           
           <FormField label="Nome do Procedimento">
@@ -181,7 +210,7 @@ export default function Procedimentos() {
           <div className="modal-actions">
             <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} disabled={isSubmitting}>Cancelar</button>
             <button type="submit" className="btn-primary" disabled={isSubmitting}>
-              {isSubmitting ? 'Salvando...' : 'Salvar Procedimento'}
+              {isSubmitting ? 'Salvando...' : (editingProcedure ? 'Atualizar Procedimento' : 'Salvar Procedimento')}
             </button>
           </div>
         </form>

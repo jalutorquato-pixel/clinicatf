@@ -18,11 +18,7 @@ export default function Pontos() {
       const res = await apiClient.get('/points');
       setPontos(res.data);
     } catch (error) {
-      // Mock Data
-      setPontos([
-        { id: 1, ambassador_name: 'Ana Beauty', referred_name: 'Julia Silva', cycle_name: 'Ciclo Q4 2023', points: 50, date: '2023-10-25T14:00:00', validated_by: 'Admin' },
-        { id: 2, ambassador_name: 'Ju Indica', referred_name: 'Marcos Costa', cycle_name: 'Ciclo Q4 2023', points: 50, date: '2023-10-22T09:30:00', validated_by: 'Recepção' }
-      ]);
+      setPontos([]);
     } finally {
       setIsLoading(false);
     }

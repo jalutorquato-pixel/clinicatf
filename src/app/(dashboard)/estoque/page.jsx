@@ -64,9 +64,7 @@ export default function Estoque() {
       setProdutoForm({ name: '', category: '', sku: '', default_price: '', cost_price: '', current_stock: '', min_stock: '', is_active: true });
       fetchData();
     } catch (error) {
-      showToast('Produto cadastrado com sucesso!', 'success');
-      setIsProdutoModalOpen(false);
-      fetchData();
+      showToast('Erro ao salvar produto.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -82,9 +80,7 @@ export default function Estoque() {
       setMovimentacaoForm({ product_id: '', type: 'entrada', quantity: '', reason: '' });
       fetchData();
     } catch (error) {
-      showToast('Movimentação registrada!', 'success');
-      setIsMovimentacaoModalOpen(false);
-      fetchData();
+      showToast('Erro ao registrar movimentação.', 'error');
     } finally {
       setIsSubmitting(false);
     }
