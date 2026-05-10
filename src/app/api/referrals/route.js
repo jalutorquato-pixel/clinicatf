@@ -28,7 +28,7 @@ export async function GET(req) {
 
     const records = await prisma.referral.findMany({
       where,
-      include: { ambassador: { select: { name: true } }, referred_client: { select: { full_name: true } } },
+      include: { ambassador: { select: { public_name: true } }, client: { select: { full_name: true } } },
     });
     return NextResponse.json(records);
   } catch (error) {

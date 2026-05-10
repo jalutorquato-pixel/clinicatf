@@ -26,7 +26,7 @@ export async function GET(req) {
       where.client_id = parseInt(clientId);
     }
 
-    const records = await prisma.contract.findMany({
+    const records = await prisma.generatedContract.findMany({
       where,
       include: { client: { select: { full_name: true } }, template: { select: { name: true } } },
     });
