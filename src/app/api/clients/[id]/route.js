@@ -39,3 +39,34 @@ export async function DELETE(req, { params }) {
     return NextResponse.json({ detail: "Error" }, { status: 500 });
   }
 }
+
+export async function PATCH(req, { params }) {
+  const user = await getUser(req);
+  if (!user) return NextResponse.json({ detail: "Não autorizado" }, { status: 401 });
+
+  try {
+    const id = parseInt(params.id);
+    const data = await req.json();
+    
+    // Remove protected fields if they exist in payload
+    delete data.id;
+    delete data.created_at;
+    
+    if (data.birth_date && typeof data.birth_date === 'string') {
+      data.birth_date = new Date(data.birth_date);
+    }
+
+    const updated = await prisma.client.update({
+      where: { id },
+      data
+    });
+    return NextResponse.json(updated);
+  } catch(e) {
+    console.error("Erro ao atualizar cliente:", e);
+    return NextResponse.json({ detail: "Error" }, { status: 500 });
+  }
+}
+
+export async function PUT(req, ctx) {
+  return PATCH(req, ctx);
+}
